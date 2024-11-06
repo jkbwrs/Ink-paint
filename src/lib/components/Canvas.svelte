@@ -642,7 +642,7 @@
 
 <style>
     canvas {
-        background: white;
+        background: #7853CD;
         border: 1px solid #808080;
         width: 100%;
         height: 100%;

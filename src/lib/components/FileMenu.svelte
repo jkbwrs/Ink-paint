@@ -67,23 +67,10 @@
             </button>
             <button
                 class="menu-item win-cursor-default"
-                onclick={() => handleClick("open")}
-            >
-                <span>Open...</span>
-                <span class="shortcut">Ctrl+O</span>
-            </button>
-            <button
-                class="menu-item win-cursor-default"
                 onclick={() => handleClick("save")}
             >
-                <span>Save</span>
+                <span>Save on Chain</span>
                 <span class="shortcut">Ctrl+S</span>
-            </button>
-            <button
-                class="menu-item win-cursor-default"
-                onclick={() => handleClick("saveAs")}
-            >
-                <span>Save As...</span>
             </button>
             <div class="separator"></div>
             <button
@@ -142,7 +129,7 @@
     }
 
     .menu-item-top:hover {
-        background: #000080;
+        background: #6630D9;
         color: white;
     }
 
@@ -171,7 +158,7 @@
     }
 
     .menu-item:hover:not(:disabled) {
-        background: #000080;
+        background: #6630D9;
         color: white;
     }
 

@@ -74,7 +74,6 @@
         display: flex;
         flex-direction: column;
         padding: 2px;
-        background: rgb(147, 112, 219);
         border: 1px solid #808080;
         width: 64px;
     }
@@ -88,7 +87,7 @@
     button {
         width: 28px;
         height: 28px;
-        background: rgb(147, 112, 219);
+        background: #e5e5e5;
         border: 1px solid #ffffff;
         border-right-color: rgb(106, 90, 205);
         border-bottom-color: rgb(106, 90, 205);

@@ -116,6 +116,7 @@
         background: #fff;
         padding: 1px 4px;
         font-size: 11px;
+        font-family: 'Pixelify Sans', 'Segoe UI', Tahoma, sans-serif;
     }
 
     button {
