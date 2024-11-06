@@ -82,6 +82,9 @@
         font-weight: bold;
     }
 
+    /*
+
+
     .tasks {
         flex: 1;
         display: flex;
@@ -103,6 +106,8 @@
         border: 1px solid #808080;
         color: white;
     }
+
+    */
 
     .tray {
         border-left: 1px solid #808080;

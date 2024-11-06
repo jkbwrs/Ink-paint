@@ -514,70 +514,116 @@
 
     function toggleZoom(x: number, y: number) {
         if (zoom === 1) {
-            zoom = 2;
-            const zoomX = Math.max(
-                0,
-                Math.min(width - width / zoom, x - width / (zoom * 2)),
-            );
-            const zoomY = Math.max(
-                0,
-                Math.min(height - height / zoom, y - height / (zoom * 2)),
-            );
-            ctx.scale(zoom, zoom);
-            ctx.translate(-zoomX, -zoomY);
-        } else {
-            zoom = 1;
+            const scaleX = width / canvas.clientWidth;
+            const scaleY = height / canvas.clientHeight;
+            
+            const mouseX = x * scaleX;
+            const mouseY = y * scaleY;
+            
+            const zoomX = mouseX - width / 4;
+            const zoomY = mouseY - height / 4;
+            
+            ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
+            
             const tempCanvas = document.createElement("canvas");
             tempCanvas.width = width;
             tempCanvas.height = height;
             const tempCtx = tempCanvas.getContext("2d")!;
             tempCtx.drawImage(canvas, 0, 0);
+            
+            ctx.save();
+            ctx.fillStyle = $backgroundColor;
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+            
+            ctx.scale(2, 2);
+            ctx.translate(-zoomX, -zoomY);
             ctx.drawImage(tempCanvas, 0, 0);
+            
+            zoom = 2;
+        } else {
+            ctx.restore();
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext("2d")!;
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+            ctx.drawImage(tempCanvas, 0, 0);
+            
+            zoom = 1;
         }
     }
 
     function floodFill(startX: number, startY: number, fillColor: string) {
+        startX = Math.floor(startX);
+        startY = Math.floor(startY);
+        
         const imageData = ctx.getImageData(0, 0, width, height);
         const pixels = imageData.data;
 
         const startPos = (startY * width + startX) * 4;
-        const startR = pixels[startPos];
-        const startG = pixels[startPos + 1];
-        const startB = pixels[startPos + 2];
+        const targetR = pixels[startPos];
+        const targetG = pixels[startPos + 1];
+        const targetB = pixels[startPos + 2];
+        const targetA = pixels[startPos + 3];
 
         const fillR = parseInt(fillColor.slice(1, 3), 16);
         const fillG = parseInt(fillColor.slice(3, 5), 16);
         const fillB = parseInt(fillColor.slice(5, 7), 16);
+        const fillA = 255;
 
-        if (startR === fillR && startG === fillG && startB === fillB) {
+        if (
+            targetR === fillR &&
+            targetG === fillG &&
+            targetB === fillB &&
+            targetA === fillA
+        ) {
             return;
         }
 
-        const stack = [[startX, startY]];
+        function matchesTarget(pos: number): boolean {
+            return (
+                pixels[pos] === targetR &&
+                pixels[pos + 1] === targetG &&
+                pixels[pos + 2] === targetB &&
+                pixels[pos + 3] === targetA
+            );
+        }
 
-        while (stack.length > 0) {
-            const [x, y] = stack.pop()!;
-            const pos = (y * width + x) * 4;
-
-            if (
-                x < 0 ||
-                x >= width ||
-                y < 0 ||
-                y >= height ||
-                pixels[pos] !== startR ||
-                pixels[pos + 1] !== startG ||
-                pixels[pos + 2] !== startB
-            ) {
-                continue;
-            }
-
+        function setPixel(pos: number) {
             pixels[pos] = fillR;
             pixels[pos + 1] = fillG;
             pixels[pos + 2] = fillB;
-            pixels[pos + 3] = 255;
+            pixels[pos + 3] = fillA;
+        }
 
-            stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        const queue: [number, number][] = [[startX, startY]];
+        const visited = new Set<string>();
+
+        while (queue.length > 0) {
+            const [x, y] = queue.shift()!;
+            const key = `${x},${y}`;
+
+            if (visited.has(key)) continue;
+            if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+            const pos = (y * width + x) * 4;
+            
+            if (!matchesTarget(pos)) continue;
+
+            visited.add(key);
+            setPixel(pos);
+
+            queue.push(
+                [x + 1, y],
+                [x - 1, y],
+                [x, y + 1],
+                [x, y - 1]
+            );
         }
 
         ctx.putImageData(imageData, 0, 0);

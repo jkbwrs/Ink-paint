@@ -155,6 +155,7 @@
         text-align: left;
         background: transparent;
         border: none;
+        font-family: 'Pixelify Sans';
     }
 
     .menu-item:hover:not(:disabled) {
