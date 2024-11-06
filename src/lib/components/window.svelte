@@ -78,7 +78,7 @@
     aria-labelledby="window"
     onmousedown={handleMouseDown}
 >
-    <div class="title-bar win-cursor-move">
+    <div class="title-bar">
         <span>{title}</span>
         <div class="window-controls">
             <button class="minimize win-cursor-default">_</button>
@@ -100,7 +100,7 @@
 <style>
     .window {
         position: absolute;
-        background-color: #c0c0c0;
+        background-color: #fff;
         border: 2px solid #ffffff;
         border-right-color: #808080;
         border-bottom-color: #808080;
@@ -118,6 +118,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        font-family: 'Pixelify Sans';
     }
 
     .window-controls {
@@ -133,7 +134,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #c0c0c0;
+        background: #fff;
         border: 1px solid #ffffff;
         border-right-color: #808080;
         border-bottom-color: #808080;
@@ -143,7 +144,7 @@
         display: flex;
         gap: 4px;
         padding: 4px;
-        background-color: #c0c0c0;
+        background-color: #fff;
         height: calc(100% - 58px);
     }
 </style>

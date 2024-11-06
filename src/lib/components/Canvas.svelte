@@ -488,7 +488,7 @@
         textInput.style.color = rightMouseDown
             ? $backgroundColor
             : $currentColor;
-        textInput.style.font = '12px "MS Sans Serif"';
+        textInput.style.font = '12px';
         document.body.appendChild(textInput);
         textInput.focus();
     }
@@ -502,7 +502,7 @@
             const x = (rect.left - canvasRect.left) * scaleX;
             const y = (rect.top - canvasRect.top) * scaleY;
 
-            ctx.font = '12px "MS Sans Serif"';
+            ctx.font = '12px';
             ctx.fillStyle = rightMouseDown ? $backgroundColor : $currentColor;
             ctx.fillText(textInput.value, x, y + 12);
 

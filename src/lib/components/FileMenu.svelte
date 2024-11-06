@@ -127,7 +127,7 @@
 
 <style>
     .menu-bar {
-        background-color: #c0c0c0;
+        background-color: #fff;
         padding: 4px;
         border-bottom: 1px solid #808080;
         display: flex;
@@ -138,6 +138,7 @@
     .menu-item-top {
         cursor: pointer;
         padding: 2px 4px;
+        font-family: 'Pixelify Sans';
     }
 
     .menu-item-top:hover {
@@ -149,7 +150,7 @@
         position: absolute;
         top: 100%;
         left: 4px;
-        background: #c0c0c0;
+        background: #fff;
         border: 1px solid #808080;
         border-top: 1px solid #ffffff;
         border-left: 1px solid #ffffff;

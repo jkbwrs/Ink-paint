@@ -55,7 +55,7 @@
         display: flex;
         gap: 4px;
         padding: 4px;
-        background-color: #c0c0c0;
+        background-color: #fff;
         height: calc(100% - 50px);
     }
 

@@ -43,7 +43,7 @@
         align-items: center;
         gap: 2px;
         padding: 4px;
-        background: #c0c0c0;
+        background: #fff;
         border: 1px solid #808080;
     }
 

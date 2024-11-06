@@ -41,9 +41,11 @@
             Start
         </button>
     </div>
+    <!--
     <div class="tasks">
         <button class="task active">INK</button>
     </div>
+    -->
     <div class="tray">
         <span class="time">{time}</span>
     </div>
@@ -56,7 +58,7 @@
         left: 0;
         right: 0;
         height: 28px;
-        background: #c0c0c0;
+        background: #fff;
         border-top: 1px solid #ffffff;
         display: flex;
         padding: 2px;
@@ -73,7 +75,7 @@
         gap: 4px;
         padding: 2px 4px;
         height: 26px;
-        background: #c0c0c0;
+        background: #fff;
         border: 1px solid #ffffff;
         border-right-color: #808080;
         border-bottom-color: #808080;
@@ -88,7 +90,7 @@
 
     .task {
         padding: 2px 8px;
-        background: #c0c0c0;
+        background: #fff;
         border: 1px solid #ffffff;
         border-right-color: #808080;
         border-bottom-color: #808080;
@@ -107,10 +109,11 @@
         padding: 2px 4px;
         display: flex;
         align-items: center;
+        margin-left: auto;
     }
 
     .time {
-        background: #c0c0c0;
+        background: #fff;
         padding: 1px 4px;
         font-size: 11px;
     }
