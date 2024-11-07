@@ -9,9 +9,10 @@
         children: Snippet;
         undo: () => void;
         redo: () => void; 
+        discord: () => void; 
     }
 
-    let { title, width, height, children, undo, redo }: WindowProps = $props();
+    let { title, width, height, children, undo, redo, discord }: WindowProps = $props();
 
     let windowPosition = $state({
         x: 0,
@@ -93,6 +94,7 @@
         on:action={handleFileAction}
         undo={undo}
         redo={redo}
+        discord={discord}
     />
     <div class="content">
         {#if children}

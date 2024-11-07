@@ -228,7 +228,6 @@
         imageData = ctx.getImageData(0, 0, width, height);
 
         switch ($currentTool) {
-            case "splash":
             case "pepe":
             case "dodge":
             case "dodge-2":
@@ -330,7 +329,7 @@
 
         const { x, y } = getCanvasCoordinates(e);
 
-        if (['splash', 'pepe', 'dodge', 'dodge-2'].includes($currentTool)) {
+        if (['pepe', 'dodge', 'dodge-2'].includes($currentTool)) {
             const dx = x - lastX;
             const dy = y - lastY;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -375,6 +374,61 @@
                     const offsetY = (Math.random() - 0.5) * radius * 2;
                     if (offsetX * offsetX + offsetY * offsetY <= radius * radius) {
                         ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+                    }
+                }
+                break;
+
+            case "splash":
+                const splashConfig = {
+                    minRadius: 1,
+                    maxRadius: 8,
+                    minDensity: 5,
+                    maxDensity: 15,
+                    minOpacity: 0.2,
+                    maxOpacity: 0.7,
+                    minDroplets: 2,
+                    maxDroplets: 5
+                };
+
+                const numDroplets = Math.floor(
+                    Math.random() * 
+                    (splashConfig.maxDroplets - splashConfig.minDroplets) + 
+                    splashConfig.minDroplets
+                );
+
+                for (let d = 0; d < numDroplets; d++) {
+                    const dropX = x + (Math.random() - 0.5) * 30;
+                    const dropY = y + (Math.random() - 0.5) * 30;
+                    
+                    const radius = Math.random() * 
+                        (splashConfig.maxRadius - splashConfig.minRadius) + 
+                        splashConfig.minRadius;
+                    const density = Math.floor(
+                        Math.random() * 
+                        (splashConfig.maxDensity - splashConfig.minDensity) + 
+                        splashConfig.minDensity
+                    );
+                    const opacity = Math.random() * 
+                        (splashConfig.maxOpacity - splashConfig.minOpacity) + 
+                        splashConfig.minOpacity;
+
+                    const color = rightMouseDown ? $backgroundColor : $currentColor;
+                    const rgba = color.startsWith('#') 
+                        ? `rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, ${opacity})`
+                        : color;
+
+                    ctx.fillStyle = rgba;
+
+                    for (let i = 0; i < density; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = Math.random() * radius;
+                        const pointX = dropX + Math.cos(angle) * distance;
+                        const pointY = dropY + Math.sin(angle) * distance;
+                        
+                        const pointSize = Math.random() * 2 + 1;
+                        ctx.beginPath();
+                        ctx.arc(pointX, pointY, pointSize, 0, Math.PI * 2);
+                        ctx.fill();
                     }
                 }
                 break;
@@ -690,6 +744,7 @@
         
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+        
     });
 
     function undo() {

@@ -1,19 +1,15 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import { undoStack, redoStack, newCanvas } from "../store";
-    import { get } from "svelte/store";
+    import { newCanvas } from "../store";
 
     interface Props {
         isOpen: boolean;
         undo: () => void;
-        redo: () => void
+        redo: () => void;
+        discord: () => void
     }
 
-    let { isOpen, undo, redo }: Props = $props();
-
-    const UNDO_STACK_KEY = 'canvas_undo_stack';
-    const REDO_STACK_KEY = 'canvas_redo_stack';
-    const STORAGE_KEY = 'canvas_state';
+    let { isOpen, undo, redo, discord }: Props = $props();
 
     const dispatch = createEventDispatcher<{
         action: { id: string };
@@ -33,6 +29,7 @@
     function toggleMenu() {
         isOpen = !isOpen;
     }
+
 </script>
 
 <div class="menu-bar win-cursor-default">
@@ -54,7 +51,7 @@
             </button>
             <button
                 class="menu-item win-cursor-default"
-                onclick={() => handleClick("save")}
+                onclick={discord}
             >
                 <span>SUBMIT TO DISCORD</span>
                 <span class="shortcut">Ctrl+S</span>
