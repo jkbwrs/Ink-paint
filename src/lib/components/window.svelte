@@ -6,10 +6,12 @@
         title: string;
         width: number;
         height: number;
-        children: Snippet
+        children: Snippet;
+        undo: () => void;
+        redo: () => void; 
     }
 
-    let { title, width, height, children }: WindowProps = $props();
+    let { title, width, height, children, undo, redo }: WindowProps = $props();
 
     let windowPosition = $state({
         x: 0,
@@ -89,6 +91,8 @@
     <FileMenu
         isOpen={fileMenuOpen}
         on:action={handleFileAction}
+        undo={undo}
+        redo={redo}
     />
     <div class="content">
         {#if children}
@@ -110,7 +114,7 @@
     }
 
     .title-bar {
-        background-color: rgb(72, 61, 139);
+        background-color: #7132F5;
         color: white;
         padding: 2px 4px;
         font-weight: bold;
@@ -143,7 +147,7 @@
     .content {
         display: flex;
         gap: 4px;
-        padding: 4px;
+        padding: 0;
         background-color: #fff;
         height: calc(100% - 58px);
     }

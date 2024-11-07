@@ -45,5 +45,8 @@
         inset: 0;
         height: 100%;
         width: 100%;
+        background-image: url("../ink-bg.webp");
+        background-size: cover;
+        background-position: center center;
     }
 </style>

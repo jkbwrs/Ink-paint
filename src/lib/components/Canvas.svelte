@@ -3,17 +3,28 @@
         currentColor,
         backgroundColor,
         currentTool,
-        selectedArea,
         undoStack,
         redoStack,
+        newCanvas,
+        STORAGE_KEY,
+        UNDO_STACK_KEY,
+        REDO_STACK_KEY,
     } from "../store";
 
-    interface CanvasProps {
-        width: number;
-        height: number;
+    interface Props {
+        handleUndo: () => void
+        handleRedo: () => void
+        currentImage: string
     }
 
-    let { width, height }: CanvasProps = $props();
+    let {
+        handleUndo = $bindable(() => {}),
+        handleRedo = $bindable(() => {}),
+        currentImage = $bindable('')
+    }: Props = $props()
+
+    let width = $state(1155);
+    let height = $state(385);
 
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D;
@@ -26,9 +37,6 @@
     let points = $state<{ x: number; y: number }[]>([]);
     let imageData = $state<ImageData | null>(null);
     let zoom = $state(1);
-    let textInput = $state<HTMLInputElement | null>(null);
-    let isDraggingSelection = $state(false);
-    let selectionStartPos = $state({ x: 0, y: 0 });
     let rightMouseDown = $state(false);
     let curvePoints = $state<{ x: number; y: number }[]>([]);
     let curveStep = $state(0);
@@ -36,40 +44,178 @@
     $effect(() => {
         if (canvas && ctx) {
             const tempCanvas = document.createElement("canvas");
-            const tempCtx = tempCanvas.getContext("2d")!;
             tempCanvas.width = width;
             tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext("2d", {
+                alpha: false,
+                willReadFrequently: true
+            })!;
+            
             tempCtx.drawImage(canvas, 0, 0);
             canvas.width = width;
             canvas.height = height;
+            ctx.imageSmoothingEnabled = false;
             ctx.drawImage(tempCanvas, 0, 0, width, height);
+            
+            if (canvas.toDataURL() !== document.createElement('canvas').toDataURL()) {
+                saveToLocalStorage();
+            }
+
+            const unsubscribe = newCanvas.subscribe(isNew => {
+                if (isNew) {
+                    ctx.fillStyle = $backgroundColor;
+                    ctx.fillRect(0, 0, width, height);
+                    localStorage.removeItem(STORAGE_KEY);
+                    localStorage.removeItem(UNDO_STACK_KEY); 
+                    localStorage.removeItem(REDO_STACK_KEY);
+                    undoStack.set([]);
+                    redoStack.set([]);
+                    newCanvas.set(false);
+                    imageData = ctx.getImageData(0, 0, width, height);
+                }
+            });
+
+            return () => {
+                unsubscribe();
+            };
         }
     });
 
+    function saveToLocalStorage() {
+        if (!canvas) return;
+        
+        try {
+            localStorage.setItem(STORAGE_KEY, canvas.toDataURL());
+            
+            const maxStates = 10;
+            
+            const undoData = $undoStack
+                .slice(-maxStates)
+                .map(imageData => canvas.toDataURL());
+                
+            const redoData = $redoStack
+                .slice(-maxStates)
+                .map(imageData => canvas.toDataURL());
+            
+            localStorage.setItem(UNDO_STACK_KEY, JSON.stringify(undoData));
+            localStorage.setItem(REDO_STACK_KEY, JSON.stringify(redoData));
+        } catch (error) {
+            if (error instanceof Error && error.name === 'QuotaExceededError') {
+                try {
+                    localStorage.setItem(STORAGE_KEY, canvas.toDataURL());
+                    localStorage.removeItem(UNDO_STACK_KEY);
+                    localStorage.removeItem(REDO_STACK_KEY);
+                } catch (e) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    localStorage.removeItem(UNDO_STACK_KEY);
+                    localStorage.removeItem(REDO_STACK_KEY);
+                }
+            }
+        }
+    }
+
+    function restoreFromLocalStorage() {
+        if (!canvas || !ctx) return;
+
+        const savedImage = localStorage.getItem(STORAGE_KEY);
+        if (savedImage) {
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                imageData = ctx.getImageData(0, 0, width, height);
+                
+                const savedUndoStack = localStorage.getItem(UNDO_STACK_KEY);
+                const savedRedoStack = localStorage.getItem(REDO_STACK_KEY);
+                
+                if (savedUndoStack) {
+                    const undoUrls = JSON.parse(savedUndoStack);
+                    Promise.all(undoUrls.map(loadImageData))
+                        .then(undoStates => {
+                            undoStack.set(undoStates);
+                        });
+                }
+                
+                if (savedRedoStack) {
+                    const redoUrls = JSON.parse(savedRedoStack);
+                    Promise.all(redoUrls.map(loadImageData))
+                        .then(redoStates => {
+                            redoStack.set(redoStates);
+                        });
+                }
+            };
+            img.src = savedImage;
+        }
+    }
+
+    function loadImageData(dataUrl: string): Promise<ImageData> {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d')!;
+                tempCtx.drawImage(img, 0, 0);
+                resolve(tempCtx.getImageData(0, 0, width, height));
+            };
+            img.src = dataUrl;
+        });
+    }
+
+    function saveState() {
+        undoStack.update((stack: ImageData[]) => {
+            const maxStates = 10;
+            const newStack = [...stack, ctx.getImageData(0, 0, width, height)];
+            return newStack.slice(-maxStates); 
+        });
+        redoStack.set([]);
+        saveToLocalStorage();
+        updateCurrentImage();
+    }
+
     function getCanvasCoordinates(e: MouseEvent) {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = width / rect.width;
-        const scaleY = height / rect.height;
-        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scaleX = width / canvas.offsetWidth;
+        const scaleY = height / canvas.offsetHeight;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
         
         return {
-            x: ((e.clientX + scrollLeft - rect.left) * scaleX),
-            y: ((e.clientY + scrollTop - rect.top) * scaleY)
+            x: Math.round(x),
+            y: Math.round(y)
         };
     }
 
     function initCanvas(node: HTMLCanvasElement) {
-        ctx = node.getContext("2d")!;
+        canvas = node;
+        ctx = node.getContext("2d", {
+            alpha: false,
+            willReadFrequently: true
+        })!;
+        
+        canvas.width = width;
+        canvas.height = height;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        
+        ctx.imageSmoothingEnabled = false;
         ctx.fillStyle = $backgroundColor;
         ctx.fillRect(0, 0, width, height);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         imageData = ctx.getImageData(0, 0, width, height);
-        undoStack.update((stack) => [
-            ...stack,
-            ctx.getImageData(0, 0, width, height),
-        ]);
+        
+        const savedImage = localStorage.getItem(STORAGE_KEY);
+        
+        if (savedImage) {
+            restoreFromLocalStorage();
+        } else if ($undoStack.length === 0) {
+            undoStack.update((stack) => [
+                ...stack,
+                ctx.getImageData(0, 0, width, height),
+            ]);
+        }
+        updateCurrentImage();
     }
 
     function startDrawing(e: MouseEvent) {
@@ -79,27 +225,16 @@
         [lastX, lastY] = [x, y];
         [startX, startY] = [x, y];
 
-        if ($selectedArea && isPointInSelection(x, y)) {
-            isDraggingSelection = true;
-            selectionStartPos = {
-                x: x - $selectedArea.x,
-                y: y - $selectedArea.y,
-            };
-            return;
-        }
-
-        if ($selectedArea && !isDraggingSelection) {
-            applySelection();
-        }
-
         imageData = ctx.getImageData(0, 0, width, height);
 
         switch ($currentTool) {
-            case "freeSelect":
-            case "rectSelect":
-                points = [{ x: startX, y: startY }];
+            case "splash":
+            case "pepe":
+            case "dodge":
+            case "dodge-2":
+                loadSvg($currentTool, x, y);
                 break;
-
+                
             case "fill":
                 floodFill(
                     x,
@@ -107,28 +242,6 @@
                     rightMouseDown ? $backgroundColor : $currentColor,
                 );
                 saveState();
-                break;
-
-            case "picker":
-                const pixel = ctx.getImageData(x, y, 1, 1).data;
-                const color = `#${pixel[0].toString(16).padStart(2, "0")}${pixel[1].toString(16).padStart(2, "0")}${pixel[2].toString(16).padStart(2, "0")}`;
-                if (rightMouseDown) {
-                    backgroundColor.set(color);
-                } else {
-                    currentColor.set(color);
-                }
-                break;
-
-            case "text":
-                if (textInput) {
-                    applyText();
-                } else {
-                    createTextInput(x, y);
-                }
-                break;
-
-            case "magnifier":
-                toggleZoom(x, y);
                 break;
 
             case "curve":
@@ -145,30 +258,94 @@
         }
     }
 
+    function applyAscii() {
+        if (!ctx || !imageData) return;
+        
+        const ASCII_CHARS = ' .`-_\':,;^=+/"|)\\<>)iv%xclrs{*}I?!][1taeo7zjLunT#JCwfy325Fp6mqSghVd4EgXPGZbYkOA&8U$@KHDBWNMR0Q'.split('');
+        const charSize = 6;
+        const fontScale = 1.2;
+        
+        const originalImageData = ctx.getImageData(0, 0, width, height);
+        const data = originalImageData.data;
+        
+        const grayscaleData = new Uint8ClampedArray(data.length);
+        for (let i = 0; i < data.length; i += 4) {
+            const brightness = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+            grayscaleData[i] = grayscaleData[i + 1] = grayscaleData[i + 2] = brightness;
+            grayscaleData[i + 3] = data[i + 3]; 
+        }
+        
+        ctx.fillStyle = $backgroundColor;
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.fillStyle = $currentColor;
+        ctx.font = `${charSize}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const cols = Math.floor(width / charSize);
+        const rows = Math.floor(height / (charSize * fontScale));
+        
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                let total = 0;
+                let count = 0;
+                let hasContent = false;
+                
+                const startX = x * charSize;
+                const startY = y * charSize * fontScale;
+                
+                for (let py = startY; py < startY + charSize * fontScale && py < height; py++) {
+                    for (let px = startX; px < startX + charSize && px < width; px++) {
+                        const pos = (Math.floor(py) * width + Math.floor(px)) * 4;
+                        const alpha = data[pos + 3];
+                        
+                        if (alpha > 0) {
+                            const brightness = grayscaleData[pos];
+                            total += brightness;
+                            count++;
+                            hasContent = true;
+                        }
+                    }
+                }
+                
+                if (hasContent) {
+                    const avgBrightness = count > 0 ? total / count : 0;
+                    const charIndex = Math.floor((avgBrightness / 255) * (ASCII_CHARS.length - 1));
+                    
+                    ctx.fillText(
+                        ASCII_CHARS[charIndex],
+                        x * charSize + charSize/2,
+                        y * charSize * fontScale + (charSize * fontScale)/2
+                    );
+                }
+            }
+        }
+        
+        saveState();
+    }
+
     function draw(e: MouseEvent) {
         if (!isDrawing) return;
 
         const { x, y } = getCanvasCoordinates(e);
 
-        if (isDraggingSelection && $selectedArea) {
-            const newX = x - selectionStartPos.x;
-            const newY = y - selectionStartPos.y;
-
-            ctx.putImageData(imageData!, 0, 0);
-            if ($selectedArea.imageData) {
-                ctx.putImageData($selectedArea.imageData, newX, newY);
+        if (['splash', 'pepe', 'dodge', 'dodge-2'].includes($currentTool)) {
+            const dx = x - lastX;
+            const dy = y - lastY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 35) {
+                loadSvg($currentTool, x, y);
+                [lastX, lastY] = [x, y];
             }
-
-            selectedArea.set({
-                ...$selectedArea,
-                x: newX,
-                y: newY,
-            });
-
             return;
         }
 
         switch ($currentTool) {
+            case "ascii":
+                applyAscii();
+                break;
             case "pencil":
                 ctx.beginPath();
                 ctx.strokeStyle = rightMouseDown ? $backgroundColor : $currentColor;
@@ -210,30 +387,6 @@
                 ctx.moveTo(lastX, lastY);
                 ctx.lineTo(x, y);
                 ctx.stroke();
-                break;
-
-            case "freeSelect":
-                points = [...points, { x, y }];
-                ctx.putImageData(imageData!, 0, 0);
-                ctx.beginPath();
-                ctx.strokeStyle = "#000000";
-                ctx.setLineDash([5, 5]);
-                ctx.moveTo(points[0].x, points[0].y);
-                for (const point of points) {
-                    ctx.lineTo(point.x, point.y);
-                }
-                ctx.stroke();
-                ctx.setLineDash([]);
-                break;
-
-            case "rectSelect":
-                ctx.putImageData(imageData!, 0, 0);
-                ctx.strokeStyle = "#000000";
-                ctx.setLineDash([5, 5]);
-                const width = x - startX;
-                const height = y - startY;
-                ctx.strokeRect(startX, startY, width, height);
-                ctx.setLineDash([]);
                 break;
 
             case "line":
@@ -343,34 +496,38 @@
         [lastX, lastY] = [x, y];
     }
 
+    async function loadSvg(toolId: string, x: number, y: number): Promise<void> {
+        if (!ctx) return;
+        
+        try {
+            const response = await fetch(`../${toolId}.svg`);
+            const svgText = await response.text();
+            
+            const blob = new Blob([svgText], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const img = new Image();
+            img.onload = () => {
+                const size = 70;
+                const drawX = x - size/2;
+                const drawY = y - size/2;
+                
+                ctx.drawImage(img, drawX, drawY, size, size);
+                URL.revokeObjectURL(url);
+                saveState();
+                updateCurrentImage();
+            };
+            img.src = url;
+        } catch (error) {
+            console.error('Failed to load SVG:', error);
+        }
+    }
+
     function stopDrawing() {
         if (!isDrawing) return;
         isDrawing = false;
-        isDraggingSelection = false;
 
         switch ($currentTool) {
-            case "freeSelect":
-            case "rectSelect":
-                const x = Math.min(startX, lastX);
-                const y = Math.min(startY, lastY);
-                const w = Math.abs(lastX - startX);
-                const h = Math.abs(lastY - startY);
-
-                if (w > 0 && h > 0) {
-                    const selectionData = ctx.getImageData(x, y, w, h);
-                    selectedArea.set({
-                        x,
-                        y,
-                        width: w,
-                        height: h,
-                        imageData: selectionData,
-                    });
-
-                    ctx.fillStyle = $backgroundColor;
-                    ctx.fillRect(x, y, w, h);
-                }
-                break;
-
             case "curve":
                 if (curveStep === 0) {
                     curvePoints = [...curvePoints, { x: lastX, y: lastY }];
@@ -406,35 +563,6 @@
         imageData = ctx.getImageData(0, 0, width, height);
     }
 
-    function saveState() {
-        undoStack.update((stack: ImageData[]) => [
-            ...stack,
-            ctx.getImageData(0, 0, width, height),
-        ]);
-        redoStack.set([]);
-    }
-
-    function isPointInSelection(x: number, y: number): boolean {
-        if (!$selectedArea) return false;
-        return (
-            x >= $selectedArea.x &&
-            x <= $selectedArea.x + $selectedArea.width &&y >= $selectedArea.y &&
-            y <= $selectedArea.y + $selectedArea.height
-        );
-    }
-
-    function applySelection() {
-        if ($selectedArea && $selectedArea.imageData) {
-            ctx.putImageData(
-                $selectedArea.imageData,
-                $selectedArea.x,
-                $selectedArea.y,
-            );
-            saveState();
-        }
-        selectedArea.set(null);
-    }
-
     function isNearStartPoint(x: number, y: number): boolean {
         if (points.length === 0) return false;
         const dx = x - points[0].x;
@@ -468,94 +596,6 @@
         ctx.quadraticCurveTo(x, y, x + radius * signX, y);
 
         ctx.stroke();
-    }
-
-    function createTextInput(x: number, y: number) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = width / rect.width;
-        const scaleY = height / rect.height;
-        const screenX = (x / scaleX) + rect.left;
-        const screenY = (y / scaleY) + rect.top;
-
-        textInput = document.createElement("input");
-        textInput.type = "text";
-        textInput.style.position = "fixed";
-        textInput.style.left = screenX + "px";
-        textInput.style.top = screenY + "px";
-        textInput.style.border = "none";
-        textInput.style.outline = "none";
-        textInput.style.background = "transparent";
-        textInput.style.color = rightMouseDown
-            ? $backgroundColor
-            : $currentColor;
-        textInput.style.font = '12px';
-        document.body.appendChild(textInput);
-        textInput.focus();
-    }
-
-    function applyText() {
-        if (textInput && textInput.value) {
-            const rect = textInput.getBoundingClientRect();
-            const canvasRect = canvas.getBoundingClientRect();
-            const scaleX = width / canvasRect.width;
-            const scaleY = height / canvasRect.height;
-            const x = (rect.left - canvasRect.left) * scaleX;
-            const y = (rect.top - canvasRect.top) * scaleY;
-
-            ctx.font = '12px';
-            ctx.fillStyle = rightMouseDown ? $backgroundColor : $currentColor;
-            ctx.fillText(textInput.value, x, y + 12);
-
-            textInput.remove();
-            textInput = null;
-            saveState();
-        }
-    }
-
-    function toggleZoom(x: number, y: number) {
-        if (zoom === 1) {
-            const scaleX = width / canvas.clientWidth;
-            const scaleY = height / canvas.clientHeight;
-            
-            const mouseX = x * scaleX;
-            const mouseY = y * scaleY;
-            
-            const zoomX = mouseX - width / 4;
-            const zoomY = mouseY - height / 4;
-            
-            ctx.save();
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-            const tempCtx = tempCanvas.getContext("2d")!;
-            tempCtx.drawImage(canvas, 0, 0);
-            
-            ctx.save();
-            ctx.fillStyle = $backgroundColor;
-            ctx.fillRect(0, 0, width, height);
-            ctx.restore();
-            
-            ctx.scale(2, 2);
-            ctx.translate(-zoomX, -zoomY);
-            ctx.drawImage(tempCanvas, 0, 0);
-            
-            zoom = 2;
-        } else {
-            ctx.restore();
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-            const tempCtx = tempCanvas.getContext("2d")!;
-            tempCtx.drawImage(canvas, 0, 0);
-            
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(tempCanvas, 0, 0);
-            
-            zoom = 1;
-        }
     }
 
     function floodFill(startX: number, startY: number, fillColor: string) {
@@ -633,6 +673,12 @@
         e.preventDefault();
     }
 
+    function updateCurrentImage() {
+        if (canvas) {
+            currentImage = canvas.toDataURL();
+        }
+    }
+
     $effect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === 'z') {
@@ -658,6 +704,8 @@
         
         ctx.putImageData(previousState, 0, 0);
         imageData = ctx.getImageData(0, 0, width, height);
+        saveToLocalStorage();
+        updateCurrentImage();
     }
 
     function redo() {
@@ -670,8 +718,36 @@
         
         ctx.putImageData(nextState, 0, 0);
         imageData = ctx.getImageData(0, 0, width, height);
+        saveToLocalStorage();
+        updateCurrentImage();
     }
+
+    $effect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    redo();
+                } else {
+                    undo();
+                }
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    });
+
+    $effect(() => {
+        handleUndo = undo;
+        handleRedo = redo;
+    });
+
 </script>
+
 
 <canvas
     bind:this={canvas}
@@ -688,9 +764,16 @@
 
 <style>
     canvas {
+        display: block;
         background: #7853CD;
         border: 1px solid #808080;
-        width: 100%;
-        height: 100%;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        -webkit-image-rendering: pixelated;
+        -moz-image-rendering: crisp-edges;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
     }
 </style>

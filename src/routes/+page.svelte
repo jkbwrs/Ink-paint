@@ -2,38 +2,43 @@
     import Canvas from "$lib/components/Canvas.svelte";
     import Toolbar from "$lib/components/Toolbar.svelte";
     import ColorPalette from "$lib/components/ColorPalette.svelte";
-    import Taskbar from "$lib/components/Taskbar.svelte";
     import Window from "$lib/components/window.svelte";
-    import { currentColor, currentTool } from "$lib/store";
+    import { currentColor, currentTool} from "$lib/store";
 
     let selectedColor = $state("#000000");
     let selectedTool = $state("pencil");
-    let windowSize = $state({ width: 1230, height: 485 });
+    let windowSize = $state({ width: 1235, height: 485 });
+    let canvasHandleUndo = $state(() => {});
+    let canvasHandleRedo = $state(() => {});
+    let currentImage = $state('')
 
-    let canvasSize = $derived({
-        width: windowSize.width - 70,
-        height: (windowSize.width - 70) / 3,
-    });
+    function undo() {
+        canvasHandleUndo();
+    }
+
+    function redo() {
+        canvasHandleRedo();
+    }
 
     $effect(() => {
         currentColor.set(selectedColor);
         currentTool.set(selectedTool);
     });
 
+    $inspect(currentImage)
+
 </script>
 
 <main class="desktop win-cursor-default">
-    <Window title="INK" width={windowSize.width} height={windowSize.height}>
+    <Window title="INK" undo={undo} redo={redo} width={windowSize.width} height={windowSize.height}>
         <div class="content">
             <Toolbar bind:selectedTool />
             <div class="canvas-container">
-                <Canvas width={canvasSize.width} height={canvasSize.height} />
+                <Canvas bind:handleUndo={canvasHandleUndo} bind:handleRedo={canvasHandleRedo} bind:currentImage />
                 <ColorPalette bind:selectedColor />
             </div>
         </div>
     </Window>
-
-    <Taskbar />
 </main>
 
 <style>
@@ -43,11 +48,6 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        /*background-color: #008080;
-        background-image: url("../ink-bg.webp");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat; */
         overflow: hidden;
     }
 
@@ -60,6 +60,7 @@
     }
 
     .canvas-container {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: 4px;

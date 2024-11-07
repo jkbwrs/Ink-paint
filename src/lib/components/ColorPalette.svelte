@@ -42,9 +42,8 @@
         justify-content: flex-start;
         align-items: center;
         gap: 2px;
-        padding: 4px;
+        padding: 6px 0;
         background: #fff;
-        border: 1px solid #808080;
     }
 
     .color-swatch {

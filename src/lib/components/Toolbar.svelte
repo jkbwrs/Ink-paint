@@ -6,23 +6,24 @@
     let { selectedTool = $bindable("") }: Props = $props();
 
     const tools = $state([
-        { id: "freeSelect", name: "Free-form Select", icon: "✄" },
-        { id: "rectSelect", name: "Select", icon: "⬚" },
-        { id: "eraser", name: "Eraser", icon: "⌫" },
-        { id: "fill", name: "Fill", icon: "🗈" },
-        { id: "picker", name: "Pick Color", icon: "⯐" },
-        { id: "magnifier", name: "Magnifier", icon: "🔍" },
-        { id: "pencil", name: "Pencil", icon: "✎" },
-        { id: "brush", name: "Brush", icon: "🖌" },
-        { id: "airbrush", name: "Airbrush", icon: "💨" },
-        { id: "text", name: "Text", icon: "A" },
-        { id: "line", name: "Line", icon: "/" },
-        { id: "curve", name: "Curve", icon: "~" },
-        { id: "rectangle", name: "Rectangle", icon: "□" },
-        { id: "polygon", name: "Polygon", icon: "⬡" },
-        { id: "circle", name: "Ellipse", icon: "○" },
-        { id: "roundRect", name: "Rounded Rectangle", icon: "⬭" },
+        { id: "eraser", name: "Eraser", img: "eraser" },
+        { id: "fill", name: "Fill", img: "fill" },
+        { id: "pencil", name: "Pencil", img: "pencil" },
+        { id: "brush", name: "Brush", img: "brush" },
+        { id: "airbrush", name: "Airbrush", img: "airbrush" },
+        { id: "line", name: "Line", img: "line" },
+        { id: "rectangle", name: "Rectangle", img: "rectangle" },
+        { id: "roundRect", name: "Rounded Rectangle", img: "rectangle-rounded" },
+        { id: "circle", name: "Ellipse", img: "circle" },
+        { id: "polygon", name: "Polygon", img: "polygon" },
+        { id: "splash", name: "Splash", img: "splash" },
+        { id: "pepe", name: "Pepe", img: "pepe" },
+        { id: "dodge", name: "Dodge", img: "dodge" },
+        { id: "dodge-2", name: "Dodge", img: "dodge-2" },
+        { id: "ascii", name: "ascii", img: "ascii" },
     ]);
+
+    $inspect(selectedTool)
 
     let toolTipText = $state("");
     let toolTipVisible = $state(false);
@@ -55,10 +56,11 @@
                 onmouseenter={(e) => showTooltip(e, tool.name)}
                 onmouseleave={hideTooltip}
             >
-                <span class="icon">{tool.icon}</span>
+                <img src="../{tool.img}.svg" alt={tool.name} class="icon" />
             </button>
         {/each}
     </div>
+    <img src="../ink-canva.svg" alt="Ink Canva" height="180" class="image">
     {#if toolTipVisible}
         <div
             class="tooltip"
@@ -74,7 +76,6 @@
         display: flex;
         flex-direction: column;
         padding: 2px;
-        border: 1px solid #808080;
         width: 64px;
     }
 
@@ -87,43 +88,42 @@
     button {
         width: 28px;
         height: 28px;
-        background: #e5e5e5;
-        border: 1px solid #ffffff;
-        border-right-color: rgb(106, 90, 205);
-        border-bottom-color: rgb(106, 90, 205);
         padding: 2px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 14px;
+        border: none;
+        background-color: transparent;
     }
 
-    button:active {
-        border: 1px solid rgb(106, 90, 205);
-        border-right-color: #ffffff;
-        border-bottom-color: #ffffff;
-    }
-
+    button:active,
     button.selected {
-        background: rgb(106, 90, 205);
-        border: 1px solid rgb(106, 90, 205);
-        color: white;
+        background-color: #eee;
     }
 
     .icon {
-        font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
-        font-size: 16px;
-        line-height: 1;
+        width: 16px;
+        height: 16px;
+    }
+
+    .image {
+        margin-top: auto;
+        margin-bottom: -40px;
+        margin-left: -5px;
     }
 
     .tooltip {
         position: fixed;
-        background: #ffffe1;
-        border: 1px solid #000000;
+        background: #7132F5;
+        border: 1px solid #7132F5;
+        color: #fff;
         padding: 2px 4px;
         font-size: 11px;
         pointer-events: none;
         z-index: 1000;
+        font-family: 'Pixelify Sans';
+        text-transform: uppercase;
     }
 </style>

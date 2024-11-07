@@ -1,40 +1,25 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import { undoStack, redoStack } from "../store";
+    import { undoStack, redoStack, newCanvas } from "../store";
     import { get } from "svelte/store";
 
     interface Props {
         isOpen: boolean;
+        undo: () => void;
+        redo: () => void
     }
 
-    let { isOpen }: Props = $props();
+    let { isOpen, undo, redo }: Props = $props();
 
-    let undoDisabled = $derived(get(undoStack).length <= 1);
-    let redoDisabled = $derived(get(redoStack).length === 0);
+    const UNDO_STACK_KEY = 'canvas_undo_stack';
+    const REDO_STACK_KEY = 'canvas_redo_stack';
+    const STORAGE_KEY = 'canvas_state';
 
     const dispatch = createEventDispatcher<{
         action: { id: string };
     }>();
 
     function handleClick(id: string) {
-        if (id === "undo" && !undoDisabled) {
-            const stack = get(undoStack);
-            if (stack.length <= 1) return;
-
-            const currentState = stack[stack.length - 1];
-            const previousState = stack[stack.length - 2];
-
-            undoStack.update((s) => s.slice(0, -1));
-            redoStack.update((s) => [...s, currentState]);
-        } else if (id === "redo" && !redoDisabled) {
-            const stack = get(redoStack);
-            if (stack.length === 0) return;
-
-            const nextState = stack[stack.length - 1];
-            redoStack.update((s) => s.slice(0, -1));
-            undoStack.update((s) => [...s, nextState]);
-        }
-
         dispatch("action", { id });
         isOpen = false;
     }
@@ -60,33 +45,33 @@
         >
             <button
                 class="menu-item win-cursor-default"
-                onclick={() => handleClick("new")}
+                onclick={() => {
+                    newCanvas.set(true);
+                }}
             >
-                <span>New</span>
+                <span>NEW</span>
                 <span class="shortcut">Ctrl+N</span>
             </button>
             <button
                 class="menu-item win-cursor-default"
                 onclick={() => handleClick("save")}
             >
-                <span>Save on Chain</span>
+                <span>SUBMIT TO DISCORD</span>
                 <span class="shortcut">Ctrl+S</span>
             </button>
             <div class="separator"></div>
             <button
                 class="menu-item win-cursor-default"
-                onclick={() => handleClick("undo")}
-                disabled={undoDisabled}
+                onclick={undo}
             >
-                <span>Undo</span>
+                <span>UNDO</span>
                 <span class="shortcut">Ctrl+Z</span>
             </button>
             <button
                 class="menu-item win-cursor-default"
-                onclick={() => handleClick("redo")}
-                disabled={redoDisabled}
+                onclick={redo}
             >
-                <span>Redo</span>
+                <span>REDO</span>
                 <span class="shortcut">Ctrl+Y</span>
             </button>
             <div class="separator"></div>
@@ -94,7 +79,7 @@
                 class="menu-item win-cursor-default"
                 onclick={() => handleClick("exit")}
             >
-                <span>Exit</span>
+                <span>EXIT</span>
             </button>
         </div>
     {/if}
@@ -103,23 +88,21 @@
         onclick={toggleMenu}
         onkeydown={(e) => e.key === "Enter" && toggleMenu()}
         role="menuitem"
-        tabindex="0">File</span
+        tabindex="0">FILE</span
     >
-    <span class="menu-item-top">Edit</span>
-    <span class="menu-item-top">View</span>
-    <span class="menu-item-top">Image</span>
-    <span class="menu-item-top">Options</span>
-    <span class="menu-item-top">Help</span>
+    <span class="menu-item-top">WHAT IS INK?</span>
+    <span class="menu-item-top">SUPERCHAIN</span>
+    <span class="menu-item-top">FOLLOW ON X</span>
 </div>
 
 <style>
     .menu-bar {
         background-color: #fff;
         padding: 4px;
-        border-bottom: 1px solid #808080;
         display: flex;
-        gap: 16px;
+        gap: 32px;
         position: relative;
+        color: #7132F5;
     }
 
     .menu-item-top {
@@ -129,7 +112,7 @@
     }
 
     .menu-item-top:hover {
-        background: #6630D9;
+        background: #7132F5;
         color: white;
     }
 
@@ -155,11 +138,13 @@
         text-align: left;
         background: transparent;
         border: none;
+        font-size: 16px;
         font-family: 'Pixelify Sans';
+        color: #7132F5;
     }
 
     .menu-item:hover:not(:disabled) {
-        background: #6630D9;
+        background: #7132F5;
         color: white;
     }
 
