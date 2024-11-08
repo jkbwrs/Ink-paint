@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { newCanvas } from "../store";
+    import { toasts } from "$lib/components/toast/store";
 
     interface Props {
         isOpen: boolean;
@@ -30,6 +31,14 @@
         isOpen = !isOpen;
     }
 
+    function justForNow() {
+        toasts.add({
+            type: 'error',
+            message: 'Nop, not yet',
+            duration: 3000
+        });
+    }
+
 </script>
 
 <div class="menu-bar win-cursor-default">
@@ -51,7 +60,7 @@
             </button>
             <button
                 class="menu-item win-cursor-default"
-                onclick={discord}
+                onclick={justForNow}
             >
                 <span>SUBMIT TO DISCORD</span>
                 <span class="shortcut">Ctrl+S</span>

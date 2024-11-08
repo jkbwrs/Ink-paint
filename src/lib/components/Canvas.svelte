@@ -289,8 +289,8 @@
 
         switch ($currentTool) {
             case "pepe":
-            case "dodge":
-            case "dodge-2":
+            case "doge":
+            case "ink":
                 loadSvg($currentTool, x, y);
                 break;
 
@@ -407,7 +407,7 @@
 
         const { x, y } = getCanvasCoordinates(e);
 
-        if (["pepe", "dodge", "dodge-2"].includes($currentTool)) {
+        if (["pepe", "doge", "ink"].includes($currentTool)) {
             const dx = x - lastX;
             const dy = y - lastY;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -770,7 +770,7 @@
         isDrawing = false;
 
         if (
-            ["pepe", "dodge", "dodge-2"].includes($currentTool) &&
+            ["pepe", "doge", "ink"].includes($currentTool) &&
             pendingSave
         ) {
             saveState();

@@ -18,8 +18,8 @@
         { id: "polygon", name: "Polygon", img: "polygon" },
         { id: "splash", name: "Splash", img: "splash" },
         { id: "pepe", name: "Pepe", img: "pepe" },
-        { id: "dodge", name: "Dodge", img: "dodge" },
-        { id: "dodge-2", name: "WIF", img: "dodge-2" },
+        { id: "doge", name: "Doge", img: "doge" },
+        { id: "ink", name: "INK", img: "ink" },
         // { id: "ascii", name: "ascii", img: "ascii" },
     ]);
 
@@ -60,7 +60,7 @@
             </button>
         {/each}
     </div>
-    <img src="../ink-canva.svg" alt="Ink Canva" height="180" class="image">
+    <img src="../ink-canva.svg" alt="Ink Canva" height="160" class="image">
     {#if toolTipVisible}
         <div
             class="tooltip"

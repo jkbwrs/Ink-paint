@@ -1,6 +1,8 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
     import FileMenu from "./FileMenu.svelte";
+    import { scale } from 'svelte/transition';
+    import { onMount } from 'svelte';
 
     interface WindowProps {
         title: string;
@@ -22,6 +24,11 @@
     let dragStart = $state({ x: 0, y: 0 });
     let isDragging = $state(false);
     let fileMenuOpen = $state(false);
+    let isLoaded = $state(false);
+
+    onMount(() => {
+        isLoaded = true;
+    });
 
     $effect(() => {
         windowPosition = {
@@ -74,34 +81,37 @@
 
 <svelte:window onmousemove={handleMouseMove} onmouseup={handleMouseUp} />
 
-<div
-    class="window"
-    style="left: {windowPosition.x}px; top: {windowPosition.y}px; width: {width}px; height: {height}px;"
-    role="dialog"
-    aria-labelledby="window"
-    onmousedown={handleMouseDown}
->
-    <div class="title-bar">
-        <span>{title}</span>
-        <div class="window-controls">
-            <button class="minimize win-cursor-default">_</button>
-            <button class="maximize win-cursor-default">□</button>
-            <button class="close win-cursor-default">×</button>
+{#if isLoaded}
+    <div
+        class="window"
+        style="left: {windowPosition.x}px; top: {windowPosition.y}px; width: {width}px; height: {height}px;"
+        role="dialog"
+        aria-labelledby="window"
+        onmousedown={handleMouseDown}
+        in:scale={{duration: 600, start: 0}}
+    >
+        <div class="title-bar">
+            <span>{title}</span>
+            <div class="window-controls">
+                <button class="minimize win-cursor-default">_</button>
+                <button class="maximize win-cursor-default">□</button>
+                <button class="close win-cursor-default">×</button>
+            </div>
+        </div>
+        <FileMenu
+            isOpen={fileMenuOpen}
+            on:action={handleFileAction}
+            undo={undo}
+            redo={redo}
+            discord={discord}
+        />
+        <div class="content">
+            {#if children}
+                {@render children()}
+            {/if}
         </div>
     </div>
-    <FileMenu
-        isOpen={fileMenuOpen}
-        on:action={handleFileAction}
-        undo={undo}
-        redo={redo}
-        discord={discord}
-    />
-    <div class="content">
-        {#if children}
-            {@render children()}
-        {/if}
-    </div>
-</div>
+{/if}
 
 <style>
     .window {

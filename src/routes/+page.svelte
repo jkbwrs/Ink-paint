@@ -5,6 +5,8 @@
     import Window from "$lib/components/window.svelte";
     import { currentColor, currentTool} from "$lib/store";
     import Modal from "$lib/components/Modal.svelte";
+    import { toasts } from "$lib/components/toast/store";
+    import Toast from "$lib/components/toast/index.svelte"
 
     let selectedColor = $state("#000000");
     let selectedTool = $state("pencil");
@@ -33,6 +35,15 @@
     async function submitToDiscord() {
         if (!currentImage) return;
         
+        if (modalText === "" || modalXHandle === "") {
+            toasts.add({
+                type: 'error',
+                message: 'Please fill in both message and X handle',
+                duration: 3000
+            });
+            return;
+        }
+        
         try {
             const formData = new FormData();
             formData.append('image', currentImage);
@@ -44,12 +55,29 @@
                 body: formData
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to submit image');
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Failed to submit image');
             }
+
+            toasts.add({
+                type: 'success',
+                message: result.message || 'Successfully shared to Discord!',
+                duration: 3000,
+            });
+
+            modalOpen = false;
+            modalText = "";
+            modalXHandle = "";
 
         } catch (error) {
             console.error('Error submitting to Discord:', error);
+            toasts.add({
+                type: 'error',
+                message: error instanceof Error ? error.message : 'Failed to share to Discord',
+                duration: 3000,
+            });
         }
     }
 
@@ -88,6 +116,8 @@
         onSubmit={submitToDiscord}
     />
 {/if}
+
+<Toast />
 
 <style>
     .desktop {
