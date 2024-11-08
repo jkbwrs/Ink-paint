@@ -234,7 +234,7 @@
         };
     }
 
-    async function initCanvas(node: HTMLCanvasElement) {
+    function initCanvas(node: HTMLCanvasElement) {
         canvas = node;
         ctx = node.getContext("2d", {
             alpha: false,
@@ -252,6 +252,10 @@
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
+        void setupCanvas();
+    }
+
+    async function setupCanvas() {
         const restored = await restoreFromLocalStorage();
 
         if (!restored) {

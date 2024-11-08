@@ -2,7 +2,6 @@
     import { fly } from 'svelte/transition';
     import { spring } from 'svelte/motion';
     import Icon from '../icon.svelte';
-    import IconButton from '../iconButton.svelte';
 
     interface Props {
         message?: string;
@@ -93,17 +92,17 @@
     }
 
     .success {
-        background-color: rgba(12, 171, 49, 0.8);
+        background-color: rgba(12, 171, 49, 1);
         color: #fff;
     }
 
     .error {
-        background-color: rgba(244, 67, 54, 0.8);
+        background-color: rgba(244, 67, 54, 1);
         color: #fff;
     }
 
     .info {
-        background-color: var(--4);
+        background-color: #7132F5;
         color: #fff;
     }
 

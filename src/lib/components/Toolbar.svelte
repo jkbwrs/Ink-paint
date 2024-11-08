@@ -6,17 +6,17 @@
     let { selectedTool = $bindable("") }: Props = $props();
 
     const tools = $state([
+        { id: "pencil", name: "Pencil", img: "pencil" },
         { id: "eraser", name: "Eraser", img: "eraser" },
         { id: "fill", name: "Fill", img: "fill" },
-        { id: "pencil", name: "Pencil", img: "pencil" },
         { id: "brush", name: "Brush", img: "brush" },
         { id: "airbrush", name: "Airbrush", img: "airbrush" },
-        { id: "line", name: "Line", img: "line" },
+        { id: "splash", name: "Splash", img: "splash" },
         { id: "rectangle", name: "Rectangle", img: "rectangle" },
         { id: "roundRect", name: "Rounded Rectangle", img: "rectangle-rounded" },
         { id: "circle", name: "Ellipse", img: "circle" },
         { id: "polygon", name: "Polygon", img: "polygon" },
-        { id: "splash", name: "Splash", img: "splash" },
+        { id: "line", name: "Line", img: "line" },
         { id: "pepe", name: "Pepe", img: "pepe" },
         { id: "doge", name: "Doge", img: "doge" },
         { id: "ink", name: "INK", img: "ink" },
