@@ -19,7 +19,7 @@
         { id: "splash", name: "Splash", img: "splash" },
         { id: "pepe", name: "Pepe", img: "pepe" },
         { id: "dodge", name: "Dodge", img: "dodge" },
-        { id: "dodge-2", name: "Dodge", img: "dodge-2" },
+        { id: "dodge-2", name: "WIF", img: "dodge-2" },
         // { id: "ascii", name: "ascii", img: "ascii" },
     ]);
 

@@ -5,9 +5,6 @@
     import Window from "$lib/components/window.svelte";
     import { currentColor, currentTool} from "$lib/store";
     import Modal from "$lib/components/Modal.svelte";
-    
-    let modalOpen = $state(false);
-    let modalText = $state("");
 
     let selectedColor = $state("#000000");
     let selectedTool = $state("pencil");
@@ -15,6 +12,10 @@
     let canvasHandleUndo = $state(() => {});
     let canvasHandleRedo = $state(() => {});
     let currentImage = $state('')
+
+    let modalOpen = $state(false);
+    let modalText = $state("");
+    let modalXHandle = $state("");
 
     function undo() {
         canvasHandleUndo();
@@ -35,6 +36,8 @@
         try {
             const formData = new FormData();
             formData.append('image', currentImage);
+            formData.append('text', modalText);
+            formData.append('xHandle', modalXHandle);
             
             const response = await fetch('?/discord', {
                 method: 'POST',
@@ -80,7 +83,8 @@
     <Modal
         onClose={() => modalOpen = !modalOpen}
         imageUrl={currentImage}
-        text={modalText}
+        bind:text={modalText}
+        bind:xHandle={modalXHandle}
         onSubmit={submitToDiscord}
     />
 {/if}

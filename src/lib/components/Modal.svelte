@@ -2,6 +2,7 @@
     interface Props {
         imageUrl: string;
         text: string;
+        xHandle: string;
         onSubmit: () => void;
         onClose: () => void;
     }
@@ -9,6 +10,7 @@
     let { 
         imageUrl = "", 
         text = $bindable(""),
+        xHandle = $bindable(""),
         onSubmit = () => {},
         onClose = () => {}
     }: Props = $props();
@@ -43,9 +45,15 @@
             {/if}
             
             <div class="text-input">
+                <input
+                    type="text"
+                    bind:value={xHandle}
+                    placeholder="Your X-Handle"
+                    class="x-handle-input"
+                />
                 <textarea
                     bind:value={text}
-                    placeholder="Your Message X-Handle"
+                    placeholder="Your Message"
                     onkeydown={handleKeydown}
                     rows="4"
                     class="text-field"
@@ -151,6 +159,21 @@
         align-items: stretch;
         flex-direction: column;
         gap: 16px;
+    }
+
+    .x-handle-input {
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: Arial, sans-serif;
+        transition: border-color 0.2s ease;
+    }
+
+    .x-handle-input:focus {
+        outline: none;
+        border-color: #7132F5;
+        box-shadow: 0 0 0 3px rgba(113, 50, 245, 0.1);
     }
 
     .text-input textarea {
